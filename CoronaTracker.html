@@ -64,7 +64,7 @@
 				  width: 80%;
 				  margin: 0 auto;
 			  display: table;
-			  padding: 0 0 8em 0;
+			  padding: 0 0 6em 0;
 			}
 
 			.container td, .container th {
@@ -129,6 +129,20 @@
 			.updatedTime{
 				padding: 0 0 4em 0;
 			}
+
+			#searchBar{
+				padding: 0.1em 0.1em 3em 0.1em;
+			}
+			#myInput{
+				height: 2em;
+				width: 18em;
+				font-size: 0.8em;
+				background: #ddd;
+				border: none;
+				padding-left: 18px;
+			}
+
+
 		</style>
 	</head>
 	<body>
@@ -137,7 +151,7 @@
 		<br>
 
 		<div class = "updatedTime">
-				<h2 id = "updatedTime" style="color: #0C92C5  ">* Updated at </h2>		
+				<h2 id = "updatedTime" style="color: #0C92C5  ">* Updated at </h2>
 		</div>
 
 		<h3 class="container2">Global Analyses</h3>
@@ -154,6 +168,15 @@
 				</tr>
 			</thead>
 		</table>
+
+
+
+		<div class="container2" id="searchBar">
+			<input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for country..." title="Type in a name">
+  		</div>
+
+
+
 
 		<h3 class="container2">Country Wise Analyses</h3>
 
@@ -173,10 +196,53 @@
 				</tr>
 			</thead>
 		</table>
+		<div style="text-align:center;">
+    <input type="button" id="first" onclick="firstPage()" value="first" />
+    <input type="button" id="next" onclick="nextPage()" value="next" />
+    <input type="button" id="previous" onclick="previousPage()" value="previous" />
+    <input type="button" id="last" onclick="lastPage()" value="last" />
+
+    <div id="list"></div>
 
 	</body>
 	<script type="text/javascript">
+		
+
+		var dataList = new Array();
+    	var pageList = new Array();
+    	var currentPage = 1;
+    	var numberPerPage = 25;
+    	var numberOfPages = 0;
+    	
+
+
+
 		// for World Wide
+
+
+		function myFunction() {
+		  var input, filter, table, tr, td, i, txtValue;
+		  input = document.getElementById("myInput");
+		  filter = input.value.toUpperCase();
+		  table = document.getElementById("myTable");
+		  tr = table.getElementsByTagName("tr");
+		  for (i = 0; i < tr.length; i++)
+		   {
+		    	td = tr[i].getElementsByTagName("td")[0];
+		    	if (td) 
+		    	{
+		      		txtValue = td.textContent || td.innerText;
+		      		if (txtValue.toUpperCase().indexOf(filter) > -1) 
+		      		{
+		        		tr[i].style.display = "";
+		      		}
+		      		else
+		      		{
+		        		tr[i].style.display = "none";
+		     	 	}
+		    	}       
+		  	}
+		}
 
 		function dateConvert(date1)
 		{
@@ -236,6 +302,7 @@
 				{
 					response.json().then(json =>{
 						console.log(json);
+
 
 
 
@@ -312,6 +379,221 @@
 		                tr.appendChild(td);
 
 
+		                // country wise
+		                dataList = json.Countries;
+		                dataList.sort((a,b) => a.TotalConfirmed < b.TotalConfirmed ?1 :(a.TotalConfirmed===b.TotalConfirmed)?((a.Country > b.Country)?1 :-1):-1); 
+						console.log(dataList);
+						var rank = 0;
+						for(var i=0; i<dataList.length;i++)
+						{
+							dataList[i].Country = (rank+1)+". "+dataList[i].Country;
+							rank++;
+						}
+
+						console.log(dataList);
+
+
+
+			        }).then(()=>
+			        {
+			        	console.log(dataList);
+			        	load();
+
+			        	
+
+
+
+			        });
+				}
+			});
+		}
+		function load() {
+						    loadList();
+						}
+			        	function getNumberOfPages() {
+						    return Math.ceil(dataList.length / numberPerPage);
+						}
+
+						function loadList() {
+						    var begin = ((currentPage - 1) * numberPerPage);
+						    var end = begin + numberPerPage;
+
+						    pageList = dataList.slice(begin, end);
+
+						    console.log(pageList);
+
+
+						    var length = pageList.length;
+
+
+							var country =[];
+							var infected=[];
+							var still = [];
+							var deaths = [];
+							var recovered = [];
+							var newConfirmed = [];
+							var newRecovered = [];
+							var newDeaths = [];
+
+							// inserting values into data.
+							for(var i =0; i<length;i++)
+							{
+								country[i] = pageList[i].Country;
+								infected[i] = pageList[i].TotalConfirmed;
+								still[i] = pageList[i].TotalConfirmed - (pageList[i].TotalDeaths + pageList[i].TotalRecovered);
+								deaths[i] = pageList[i].TotalDeaths;
+								recovered[i] = pageList[i].TotalRecovered;
+								newConfirmed[i] = pageList[i].NewConfirmed;
+								newRecovered[i] = pageList[i].NewRecovered;
+								newDeaths[i] = pageList[i].NewDeaths;
+							}
+
+							console.log(country);
+							console.log(infected);
+							console.log(deaths);
+							console.log(recovered);
+
+
+							var table = document.getElementById("myTable");
+							var tableBody = document.createElement('TBODY');
+		             		table.appendChild(tableBody);
+
+		             		for (var i=0; i<length; i++)
+				              {
+				                var tr = document.createElement('TR');
+				                tableBody.appendChild(tr);
+
+				                // column 1 for country
+
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(country[i]));
+				                tr.appendChild(td);
+
+
+				                // column 2 for Infected
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(infected[i]));
+				                tr.appendChild(td);
+
+
+
+				                // column 3 for Still Infected
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(still[i]));
+				                tr.appendChild(td);
+
+
+
+				                // column 4 for recovered
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(recovered[i]));
+				                tr.appendChild(td);
+
+
+				                // column 5 for deaths
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(deaths[i]));
+				                tr.appendChild(td);
+
+
+				                // column 6 for new confirmed
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newConfirmed[i]+"	"));
+				                if(newConfirmed[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+
+
+
+				                // column 7 for new recovered
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newRecovered[i]+"	"));
+				                 if(newRecovered[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+
+
+
+
+				                // column 8 for new deaths
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newDeaths[i]+"	"));
+				                 if(newDeaths[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+			            	}
+
+
+						    check();
+						}
+
+
+						function check() {
+						    document.getElementById("next").disabled = currentPage == numberOfPages ? true : false;
+						    document.getElementById("previous").disabled = currentPage == 1 ? true : false;
+						    document.getElementById("first").disabled = currentPage == 1 ? true : false;
+						    document.getElementById("last").disabled = currentPage == numberOfPages ? true : false;
+						}
+
+						function nextPage() {
+							var table = document.getElementById("myTable");
+							for(var i = 1; i < table.rows.length;)
+							{   
+							   table.deleteRow(i);
+							}
+						    currentPage += 1;
+						    loadList();
+						}
+						function previousPage() {
+							var table = document.getElementById("myTable");
+							for(var i = 1; i < table.rows.length;)
+							{   
+							   table.deleteRow(i);
+							}
+						    currentPage -= 1;
+						    loadList();
+						}
+						function firstPage() {
+							var table = document.getElementById("myTable");
+							for(var i = 1; i < table.rows.length;)
+							{   
+							   table.deleteRow(i);
+							}
+						    currentPage = 1;
+						    loadList();
+						}
+
+						function lastPage() {
+							var table = document.getElementById("myTable");
+							for(var i = 1; i < table.rows.length;)
+							{   
+							   table.deleteRow(i);
+							}
+							var numPages = getNumberOfPages();
+						    currentPage = numPages;
+						    loadList();
+						}
+
+	</script>
+</html>
 
 
 
@@ -319,16 +601,174 @@
 
 
 
-		                // Now the below part will display the data of respective countries.
 
-		                var list = json.Countries;
+
+
+
+
+<!-- 
+						    var length = pageList.length;
+
+
+							var country =[];
+							var infected=[];
+							var still = [];
+							var deaths = [];
+							var recovered = [];
+							var newConfirmed = [];
+							var newRecovered = [];
+							var newDeaths = [];
+
+							// inserting values into data.
+							for(var i =0; i<length;i++)
+							{
+								country[i] = pageList[i].Country;
+								infected[i] = pageList[i].TotalConfirmed;
+								still[i] = pageList[i].TotalConfirmed - (pageList[i].TotalDeaths + pageList[i].TotalRecovered);
+								deaths[i] = pageList[i].TotalDeaths;
+								recovered[i] = pageList[i].TotalRecovered;
+								newConfirmed[i] = pageList[i].NewConfirmed;
+								newRecovered[i] = pageList[i].NewRecovered;
+								newDeaths[i] = pageList[i].NewDeaths;
+							}
+
+							console.log(country);
+							console.log(infected);
+							console.log(deaths);
+							console.log(recovered);
+
+
+							var table = document.getElementById("myTable");
+							var tableBody = document.createElement('TBODY');
+		             		table.appendChild(tableBody);
+
+		             		for (var i=0; i<length; i++)
+				              {
+				                var tr = document.createElement('TR');
+				                tableBody.appendChild(tr);
+
+				                // column 1 for country
+
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode((rank+1)+".	"+country[i]));
+				                rank++;
+				                tr.appendChild(td);
+
+
+				                // column 2 for Infected
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(infected[i]));
+				                tr.appendChild(td);
+
+
+
+				                // column 3 for Still Infected
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(still[i]));
+				                tr.appendChild(td);
+
+
+
+				                // column 4 for recovered
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(recovered[i]));
+				                tr.appendChild(td);
+
+
+				                // column 5 for deaths
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(deaths[i]));
+				                tr.appendChild(td);
+
+
+				                // column 6 for new confirmed
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newConfirmed[i]+"	"));
+				                if(newConfirmed[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+
+
+
+				                // column 7 for new recovered
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newRecovered[i]+"	"));
+				                 if(newRecovered[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+
+
+
+
+				                // column 8 for new deaths
+				                var td = document.createElement('TD');
+				                td.appendChild(document.createTextNode(newDeaths[i]+"	"));
+				                 if(newDeaths[i]>0)
+				                {
+				                	var img = document.createElement("img");
+				                	img.src = "https://media.giphy.com/media/3kIHVWHOIHi3ZqidmC/giphy.gif";
+				                	img.width = 18;
+				                	img.height = 18;
+				                	td.appendChild(img);
+				                }
+				                tr.appendChild(td);
+			            	}
+							check(); -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		                <!-- // Now the below part will display the data of respective countries. -->
+
+		                <!-- var list = json.Countries;
 						console.log(list);
 
 						list.sort((a,b) => a.TotalConfirmed < b.TotalConfirmed ?1 :(a.TotalConfirmed===b.TotalConfirmed)?((a.Country > b.Country)?1 :-1):-1); 
 						console.log(list);
 
+
 						var length = json.Countries.length;
 						console.log(length);
+
+
+						console.log(json.Countries);
+						dataList = json.Countries;
 						
 						// creating arrays to store data of particular field.
 						var country =[];
@@ -444,10 +884,4 @@
 			                	td.appendChild(img);
 			                }
 			                tr.appendChild(td);
-			            }
-			        });
-				}
-			});
-		}
-	</script>
-</html>
+			            } -->
